@@ -22,6 +22,9 @@ class Recipe(object):
         self.bin_dir = self.buildout['buildout']['bin-directory']
         self.parts_dir = self.buildout['buildout']['parts-directory']
 
+        self.environment = {}
+        if 'environment' in options:
+            self.environment = buildout.get(options.get('environment'), {})
         self.interpreter = options.get('interpreter')
         self.product_dirs = options.get('products', '')
         self.outputs = options.get('outputs', 'html')
@@ -42,7 +45,6 @@ class Recipe(object):
 
     def install(self):
         """Installer"""
-
         # 1. CREATE BUILD FOLDER IF IT DOESNT EXISTS
         if not os.path.exists(self.build_dir):
             os.mkdir(self.build_dir)
@@ -77,18 +79,23 @@ class Recipe(object):
 
         # 3. CREATE MAKEFILE
         log.info('writing MAKEFILE..')
-        self._write_file(self.makefile_path,
-                         self.re_sphinxbuild.sub(r'SPHINXBUILD = %s' % (self.build_command),
-                                                 MAKEFILE % dict(rsrcdir=self.source_dir,
-                                                                 rbuilddir=self.build_dir,
-                                                                 project_fn=self.script_name)))
+        self._write_file(
+            self.makefile_path,
+            self.re_sphinxbuild.sub(
+                r'SPHINXBUILD = %s' % (self.build_command),
+                MAKEFILE % dict(rsrcdir=self.source_dir,
+                                rbuilddir=self.build_dir,
+                                environment=self._format_environment(),
+                                project_fn=self.script_name)))
         # 4. CREATE BATCHFILE
         log.info('writing BATCHFILE..')
-        self._write_file(self.batchfile_path,
-                         self.re_sphinxbuild.sub(r'SPHINXBUILD = %s' % (self.build_command),
-                                                 BATCHFILE % dict(rsrcdir=self.source_dir,
-                                                                  rbuilddir=self.build_dir,
-                                                                  project_fn=self.script_name)))
+        self._write_file(
+            self.batchfile_path,
+            self.re_sphinxbuild.sub(
+                r'SPHINXBUILD = %s' % (self.build_command),
+                BATCHFILE % dict(rsrcdir=self.source_dir,
+                                 rbuilddir=self.build_dir,
+                                 project_fn=self.script_name)))
 
         # 4. CREATE CUSTOM "sphinx-build" SCRIPT
         log.info('writing custom sphinx-builder script..')
@@ -129,16 +136,17 @@ class Recipe(object):
 
         # WEIRD: this is needed for doctest to pass
         # :write gives error
-        #       -> ValueError: ('Expected version spec in',
-        #               'collective.recipe.sphinxbuilder:write', 'at', ':write')
+        # -> ValueError: ('Expected version spec in',
+        #    'collective.recipe.sphinxbuilder:write', 'at', ':write')
         self.egg.name = self.options['recipe']
         requirements, ws = self.egg.working_set([self.options['recipe'], 'docutils'])
-        zc.buildout.easy_install.scripts([('sphinx-quickstart', 'sphinx.quickstart', 'main'),
-                                          ('sphinx-build', 'sphinx', 'main'),
-                                          ('sphinx-apidoc', 'sphinx.apidoc', 'main'),
-                                          ('sphinx-autogen', 'sphinx.ext.autosummary.generate', 'main')], ws,
-                                         self.buildout[self.buildout['buildout']['python']]['executable'],
-                                         self.bin_dir, **egg_options)
+        zc.buildout.easy_install.scripts(
+            [('sphinx-quickstart', 'sphinx.quickstart', 'main'),
+             ('sphinx-build', 'sphinx', 'main'),
+             ('sphinx-apidoc', 'sphinx.apidoc', 'main'),
+             ('sphinx-autogen', 'sphinx.ext.autosummary.generate', 'main')], ws,
+            self.buildout[self.buildout['buildout']['python']]['executable'],
+            self.bin_dir, **egg_options)
 
         # patch sphinx-build script
         # change last line from sphinx.main() to sys.exit(sphinx.main())
@@ -149,7 +157,7 @@ class Recipe(object):
         for line in sb_file:
             if 'sphinx.main()' in line:
                 replacement = 'sys.exit(sphinx.main())'
-                if not replacement in line:
+                if replacement not in line:
                     # Buildout 2.x already includes sys.exit()
                     line = line.replace('sphinx.main()', replacement)
             temp_lines.append(line)
@@ -178,6 +186,11 @@ class Recipe(object):
         if len(source) == 2:
             source_directory = os.path.join(source_directory, source[1])
         return source_directory
+
+    def _format_environment(self):
+        return '\n'.join(map(
+            lambda (name, value): 'export %s = %s' % (name, value),
+            self.environment.items()))
 
     def _write_file(self, name, content):
         f = open(name, 'w')

@@ -27,4 +27,8 @@ The recipe supports the following options:
         Extra product directories to be extend the Products namespace for
         old-style Zope Products.
 
-
+    environment
+        Point to a buildout part that will be used to define extra
+        environment variables in the generated Makefile used to run
+        Sphinx. This is useful for Sphinx extensions that can be
+        configured that way.

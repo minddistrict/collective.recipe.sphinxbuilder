@@ -2,6 +2,11 @@
 Changes
 =======
 
+0.8.3 (unreleased)
+==================
+
+  - Add support for environment variables in the generated Makefile.
+
 0.8.2 (2013-11-28)
 ==================
 
