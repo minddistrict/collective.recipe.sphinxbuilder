@@ -4,20 +4,19 @@ MAKEFILE = '''\
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = %(build_command)s
 PAPER         =
-BUILDDIR      = %(rbuilddir)s
+BUILDDIR      = %(build_dir)s
 
-# Environment variable.
 %(environment)s
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) \
-$(SPHINXOPTS) %(rsrcdir)s
+$(SPHINXOPTS) %(src_dir)s
 # the i18n builder cannot share the environment and doctrees with the others
-I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) %(rsrcdir)s
+I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) %(src_dir)s
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp \
 epub latex latexpdf text man changes linkcheck doctest gettext
@@ -50,14 +49,14 @@ clean:
 \t-rm -rf $(BUILDDIR)/*
 
 html:
-\t$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+\t$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) %(build_html_dir)s
 \t@echo
-\t@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+\t@echo "Build finished. The HTML pages are in %(build_html_dir)s."
 
 warnings-html:
-\t$(SPHINXBUILD) -W -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+\t$(SPHINXBUILD) -W -b html $(ALLSPHINXOPTS) %(build_html_dir)s
 \t@echo
-\t@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+\t@echo "Build finished. The HTML pages are in %(build_html_dir)s."
 
 dirhtml:
 \t$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
@@ -105,22 +104,22 @@ devhelp:
 \t@echo "# devhelp"
 
 epub:
-\t$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(BUILDDIR)/epub
+\t$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) %(build_epub_dir)s
 \t@echo
-\t@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
+\t@echo "Build finished. The epub file is in %(build_epub_dir)s."
 
 latex:
-\t$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+\t$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) %(build_latex_dir)s
 \t@echo
-\t@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
+\t@echo "Build finished; the LaTeX files are in %(build_latex_dir)s."
 \t@echo "Run \\`make' in that directory to run these through (pdf)latex" \\
 \t      "(use \\`make latexpdf' here to do that automatically)."
 
 latexpdf:
-\t$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+\t$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) %(build_latex_dir)s
 \t@echo "Running LaTeX files through pdflatex..."
-\t$(MAKE) -C $(BUILDDIR)/latex all-pdf
-\t@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
+\t$(MAKE) -C %(build_latex_dir)s all-pdf
+\t@echo "pdflatex finished; the PDF files are in %(build_latex_dir)s."
 
 text:
 \t$(SPHINXBUILD) -b text $(ALLSPHINXOPTS) $(BUILDDIR)/text
@@ -162,9 +161,9 @@ linkcheck:
 \t      "or in $(BUILDDIR)/linkcheck/output.txt."
 
 doctest:
-\t$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
+\t$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) %(build_doctest_dir)s
 \t@echo "Testing of doctests in the sources finished, look at the " \\
-\t      "results in $(BUILDDIR)/doctest/output.txt."
+\t      "results in %(build_doctest_dir)s/output.txt."
 '''
 
 BATCHFILE = '''\
@@ -175,9 +174,9 @@ REM Command file for Sphinx documentation
 if "%%SPHINXBUILD%%" == "" (
 \tset SPHINXBUILD=sphinx-build
 )
-set BUILDDIR=%(rbuilddir)s
-set ALLSPHINXOPTS=-d %%BUILDDIR%%/doctrees %%SPHINXOPTS%% %(rsrcdir)s
-set I18NSPHINXOPTS=%%SPHINXOPTS%% %(rsrcdir)s
+set BUILDDIR=%(build_dir)s
+set ALLSPHINXOPTS=-d %%BUILDDIR%%/doctrees %%SPHINXOPTS%% %(src_dir)s
+set I18NSPHINXOPTS=%%SPHINXOPTS%% %(src_dir)s
 if NOT "%%PAPER%%" == "" (
 \tset ALLSPHINXOPTS=-D latex_paper_size=%%PAPER%% %%ALLSPHINXOPTS%%
 \tset I18NSPHINXOPTS=-D latex_paper_size=%%PAPER%% %%I18NSPHINXOPTS%%

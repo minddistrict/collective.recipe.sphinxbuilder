@@ -21,17 +21,19 @@ class Recipe(object):
         self.buildout_dir = self.buildout['buildout']['directory']
         self.bin_dir = self.buildout['buildout']['bin-directory']
         self.parts_dir = self.buildout['buildout']['parts-directory']
+        self.product_dirs = options.get('products', '')
 
         self.environment = {}
         if 'environment' in options:
             self.environment = buildout.get(options.get('environment'), {})
         self.interpreter = options.get('interpreter')
-        self.product_dirs = options.get('products', '')
         self.outputs = options.get('outputs', 'html')
-
-        self.build_dir = os.path.join(self.buildout_dir, options.get('build', 'docs'))
-        self.source_dir = options.get('source', os.path.join(self.build_dir, 'source'))
         self.extra_paths = self.options.get('extra-paths', None)
+
+        self.build_dir = os.path.join(
+            self.buildout_dir, options.get('build', 'docs'))
+        self.source_dir = self._resolve_path(options.get(
+            'source', os.path.join(self.build_dir, 'source')))
 
         self.script_name = options.get('script-name', name)
         self.script_path = os.path.join(self.bin_dir, self.script_name)
@@ -41,17 +43,25 @@ class Recipe(object):
         self.re_sphinxbuild = re.compile(r'^SPHINXBUILD .*$', re.M)
         self.build_command = os.path.join(self.bin_dir, 'sphinx-build')
         if self.interpreter:
-            self.build_command = ' '.join([self.interpreter, self.build_command])
+            self.build_command = ' '.join(
+                [self.interpreter, self.build_command])
+
+        self.makefile_options = {
+            'build_dir': self.build_dir,
+            'build_command': self.build_command,
+            'src_dir': self.source_dir,
+            'environment': self._format_environment(),
+            'project_fn': self.script_name}
+
+        for output in ['html', 'latex', 'epub', 'doctest']:
+            self.makefile_options['build_' + output + '_dir'] = options.get(
+                'build_' + output, '$(BUILDDIR)/' + output)
 
     def install(self):
         """Installer"""
-        # 1. CREATE BUILD FOLDER IF IT DOESNT EXISTS
+        # create build folder if it doesnt exists
         if not os.path.exists(self.build_dir):
             os.mkdir(self.build_dir)
-
-        # 2. RESOLVE SOURCE PATH
-        if not os.path.isabs(self.source_dir):
-            self.source_dir = self._resolve_path(self.source_dir)
 
         # we need extra_paths, e.g for docutils via fake-eggs
         # most probably this should be really fixed in buildout or the way
@@ -77,25 +87,17 @@ class Recipe(object):
                 sys.path.remove(x)
             sys.path.reverse()
 
-        # 3. CREATE MAKEFILE
+        # 2. CREATE MAKEFILE
         log.info('writing MAKEFILE..')
-        self._write_file(
-            self.makefile_path,
-            self.re_sphinxbuild.sub(
-                r'SPHINXBUILD = %s' % (self.build_command),
-                MAKEFILE % dict(rsrcdir=self.source_dir,
-                                rbuilddir=self.build_dir,
-                                environment=self._format_environment(),
-                                project_fn=self.script_name)))
-        # 4. CREATE BATCHFILE
+        self._write_file(self.makefile_path, MAKEFILE % self.makefile_options)
+
+        # 3. CREATE BATCHFILE
         log.info('writing BATCHFILE..')
         self._write_file(
             self.batchfile_path,
             self.re_sphinxbuild.sub(
                 r'SPHINXBUILD = %s' % (self.build_command),
-                BATCHFILE % dict(rsrcdir=self.source_dir,
-                                 rbuilddir=self.build_dir,
-                                 project_fn=self.script_name)))
+                BATCHFILE % self.makefile_options))
 
         # 4. CREATE CUSTOM "sphinx-build" SCRIPT
         log.info('writing custom sphinx-builder script..')
@@ -173,6 +175,8 @@ class Recipe(object):
     update = install
 
     def _resolve_path(self, source):
+        if os.path.isabs(source):
+            return source
         source = source.split(':')
         dist, ws = self.egg.working_set([source[0]])
         source_directory = ws.by_key[source[0]].location
@@ -181,16 +185,19 @@ class Recipe(object):
         # TODO
         namespace_packages = source[0].split('.')
         if len(namespace_packages) >= 1:
-            source_directory = os.path.join(source_directory, *namespace_packages)
+            source_directory = os.path.join(
+                source_directory, *namespace_packages)
 
         if len(source) == 2:
             source_directory = os.path.join(source_directory, source[1])
         return source_directory
 
     def _format_environment(self):
-        return '\n'.join(map(
-            lambda (name, value): 'export %s = %s' % (name, value),
-            self.environment.items()))
+        if self.environment:
+            return '# Environment variable.\n' + '\n'.join(map(
+                lambda (name, value): 'export %s = %s' % (name, value),
+                self.environment.items()))
+        return ''
 
     def _write_file(self, name, content):
         f = open(name, 'w')
