@@ -194,9 +194,7 @@ class Recipe(object):
 
     def _format_environment(self):
         if self.environment:
-            return '# Environment variable.\n' + '\n'.join(map(
-                lambda (name, value): 'export %s = %s' % (name, value),
-                self.environment.items()))
+            return '# Environment variable.\n' + '\n'.join(['export %s = %s' % (name_value[0], name_value[1]) for name_value in self.environment.items()])
         return ''
 
     def _write_file(self, name, content):
