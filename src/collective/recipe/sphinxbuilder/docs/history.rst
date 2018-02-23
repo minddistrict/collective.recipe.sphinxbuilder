@@ -5,7 +5,7 @@ Changes
 0.8.4 (unreleased)
 ==================
 
-- Nothing changed yet.
+  - Python 3 support.
 
 
 0.8.3 (2015-02-13)
