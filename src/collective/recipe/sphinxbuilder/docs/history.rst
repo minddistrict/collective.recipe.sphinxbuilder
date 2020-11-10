@@ -5,7 +5,7 @@ Changes
 1.0+md.2 (unreleased)
 =====================
 
-- Nothing changed yet.
+  - Update to sphinx v3.
 
 
 1.0+md.1 (2018-02-23)
