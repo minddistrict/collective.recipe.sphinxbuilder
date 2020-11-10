@@ -143,9 +143,9 @@ class Recipe(object):
         self.egg.name = self.options['recipe']
         requirements, ws = self.egg.working_set([self.options['recipe'], 'docutils'])
         zc.buildout.easy_install.scripts(
-            [('sphinx-quickstart', 'sphinx.quickstart', 'main'),
-             ('sphinx-build', 'sphinx', 'main'),
-             ('sphinx-apidoc', 'sphinx.apidoc', 'main'),
+            [('sphinx-quickstart', 'sphinx.cmd.quickstart', 'main'),
+             ('sphinx-build', 'sphinx.cmd.build', 'main'),
+             ('sphinx-apidoc', 'sphinx.ext.apidoc', 'main'),
              ('sphinx-autogen', 'sphinx.ext.autosummary.generate', 'main')], ws,
             self.buildout[self.buildout['buildout']['python']]['executable'],
             self.bin_dir, **egg_options)
