@@ -2,7 +2,7 @@
 Changes
 =======
 
-1.0+md.2 (unreleased)
+1.0+md.2 (2020-11-10)
 =====================
 
   - Update to sphinx v3.
