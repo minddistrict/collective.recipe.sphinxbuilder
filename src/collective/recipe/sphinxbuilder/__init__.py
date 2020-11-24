@@ -101,7 +101,8 @@ class Recipe(object):
 
         # 4. CREATE CUSTOM "sphinx-build" SCRIPT
         log.info('writing custom sphinx-builder script..')
-        script = ['cd %s' % self.build_dir]
+        script = ['#!/usr/bin/env bash',
+                  'cd %s' % self.build_dir]
         if 'doctest' in self.outputs:
             script.append('make doctest')
         if 'html' in self.outputs:
